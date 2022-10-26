@@ -2,70 +2,72 @@ package cryptopals
 
 import (
 	"encoding/hex"
-	"fmt"
 	"math"
 	"strings"
 )
 
-var letterRunes []rune = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+var letterFrequencies = map[rune]float64{
+	'e': 12,
+	'a': 8,
+	'i': 8,
+	'o': 8,
+	'u': 7.4,
+	's': 7,
+	'h': 6.4,
+	'r': 6.2,
+	't': 5,
+	'n': 5,
+	'd': 4.4,
+	'l': 4,
+	'c': 3.3,
+	'm': 3.3,
+	'f': 2.5,
+	'g': 1.7,
+	'p': 1.7,
+	'b': 1.6,
+	'v': 1.2,
+	'k': 0.8,
+	'q': 0.5,
+	'j': 0.4,
+	'x': 0.4,
+	'z': 0.2,
+}
 
-func decipherSingleXOR(cyphered string) string {
-
+func decipherSingleXOR(cyphered string) (bestResult string, score int) {
 	buffer, _ := hex.DecodeString(cyphered)
 
-	results := make(map[rune]string)
+	largestScore := math.MinInt
 
-	smallestScore := math.MaxInt
-	bestChar := 'a'
+	for i := 0; i < 256; i++ {
+		char := rune(i)
 
-	for _, char := range letterRunes {
-
-		charResult := make([]byte, len(buffer))
+		resultBuffer := make([]byte, len(buffer))
 
 		for idx := range buffer {
-			charResult[idx] = buffer[idx] ^ byte(char)
+			resultBuffer[idx] = buffer[idx] ^ byte(char)
 		}
 
-		results[char] = string(charResult)
-		score := scoreAnswer(string(charResult))
+		result := string(resultBuffer)
 
-		if score < smallestScore {
-			smallestScore = score
-			bestChar = char
+		if score := scoreAnswer(result); score > largestScore {
+			largestScore = score
+			bestResult = result
 		}
 	}
 
-	fmt.Printf("Best char for decypher is %c", bestChar)
-
-	return results[bestChar]
-
+	return bestResult, largestScore
 }
 
 func scoreAnswer(answer string) int {
+	answer = strings.ToLower(answer)
+
+	charScoreSum := 0.0
+	for _, char := range answer {
+		charScoreSum += letterFrequencies[char]
+	}
 
 	words := strings.Split(answer, " ")
+	wordCountScore := len(words)
 
-	wordLengthSums := 0
-	for _, word := range words {
-		wordLengthSums += len(word)
-	}
-	averageWordLength := wordLengthSums / len(words)
-
-	wordLengthScore := 5 - averageWordLength
-	if wordLengthScore < 0 {
-		wordLengthScore = -wordLengthScore
-	}
-
-	letterCharsCount := 0
-	for _, char := range answer {
-		for _, letterRune := range letterRunes {
-			if letterRune == char {
-				letterCharsCount++
-				break
-			}
-		}
-	}
-	letterCountScore := len(answer) - letterCharsCount
-
-	return wordLengthScore * letterCountScore
+	return int(charScoreSum) * wordCountScore
 }

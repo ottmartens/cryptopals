@@ -8,7 +8,7 @@ func TestDecipherSingleXOR(t *testing.T) {
 
 	want := "Cooking MC's like a pound of bacon"
 
-	result := decipherSingleXOR(input)
+	result, _ := decipherSingleXOR(input)
 
 	assertEquals(t, result, want)
 }
